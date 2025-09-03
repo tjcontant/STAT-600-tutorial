@@ -1,0 +1,223 @@
+---
+format:
+  html:
+    self-contained: true
+---
+
+# `pushoverr`
+
+Tristan Contant, STAT-600, 2025-09-11
+
+## Motivation
+
+With the advent of big data and great computational power, it has become  common to have scripts that take a long time to run, notably in Bayesian computation. When running long scripts, it is helpful to periodically get updates.
+
+  * **errors**: Is my script still running? If not, why did it stop?
+  * **progress**: How far along is the script? How much longer will it take?
+  
+When working locally in Rstudio, these updates are easily obtained. Error detection can be addressed by printing helpful messages within functions that explain errors. For example, we may want to check the type of objects given to a function. In the following example, we only accept scalar values, not vectors.
+
+```{r}
+# non-vectorized log()
+log_scalar <- function(x) {
+  tryCatch({
+    
+    if (length(x) != 1) {
+      stop("Input must be a single value.")
+    }
+    
+    return(log(x))
+
+  }, error = function(e) {
+    cat("Caught an error:", e$message, "\n")
+    return(NA)
+  })
+}
+```
+
+We compare the two functions.
+
+```{r}
+log(c(1, 2))
+log_scalar(c(1, 2))
+```
+
+Tracking progress can be addressed using the `progress` package which will display handy metrics. For example, you can get a progress bar output to your console that looks like
+
+```
+  Progress [==========>----------------------]  32% ETA:  7s
+```
+
+If working remotely, you may not have access to an integrated development environment (IDE) such as RStudio. For example, you may be running scripts on a high-performance computing system such as Alpine. In this situation, creating log files to store errors and progress can be a way to to get updates.
+
+```{r, eval=F}
+dir.create("logs", recursive = TRUE, showWarnings = FALSE)
+sink(paste0("logs/log_", Sys.Date(), ".txt"), split = TRUE)
+```
+
+All of the above is easily implemented, but it it requires that you consistently pull up Rstudio or log into servers. You have to always have access to your computer to check errors/progress, along with signing into VPNs if your server has such securities.
+
+To avoid this hassle, `pushoverr` is a package that can send push notifications to your phone, smart watch, or web browser. **You can see how your R script is performing on the go.** Catch errors in your script as they come up, rather than waiting all day for your script to finish only to realize that it encountered an error at the beginning. See your script's progress in real time.
+
+## Setup
+
+To get started, we first need to create a pushover account at [https://pushover.net/signup](https://pushover.net/signup). A free 30 day trial is available. After that, a one-time payment of $5.99 is required. You can send up to 10,000 notifications a month.
+
+Once you have created an account, you will have a user key which will uniquely identify you in the pushover system. 
+
+![](img/user_key.png){width=75% fig-align="center"}
+
+Before coding in R, we must add our devices (the computers or servers that will be creating push notifications) and create an API token. This is straightforward within the website.
+
+![](img/device_and_api.png){width=75% fig-align="center"}
+
+
+In this tutorial, we will assume you want push notifications sent to your phone. Download the pushover app and log in with the pushover account you just created.
+
+![](img/app_home.png){width=30% fig-align="center"}
+
+Now, we are ready to begin coding. Install and load the `pushoverr` package. 
+
+```{r, eval=F}
+instal.packages("pushoverr")
+library(pushoverr)
+```
+
+Two lines are necessary to link your R script to your pushover account:
+
+```{r, eval=F}
+set_pushover_user(user = "...")
+set_pushover_app(token = "...")
+```
+
+Include this at the beginning of your .R files. You can find your API token on the pushover website. If you want to share your code without sharing your user key and API token, save these strings in separate files.
+
+## Usage
+
+To send a push notification, call
+
+```{r, eval=F}
+pushover(message = "Hello world.")
+```
+
+where you can set the message to whatever string you would like.
+
+![](img/hello_world.png){width=30% fig-align="center"}
+
+More practically, you could set your message to the current iteration:
+
+```{r, eval=F}
+message <- paste0(i, " / ", total_iter)
+```
+
+![](img/progress.png){width=30% fig-align="center"}
+
+In the above image, I included "LF" to to help indicate that I am getting notification pertaining to a low-fidelity emulator.
+
+If you don't want your phone to make a sound for the notification, use
+
+```{r, eval=F}
+pushover_quiet(message = "...")
+```
+
+If you want to send a message for some sort of crisis in your code, using
+
+```{r, eval=F}
+pushover_emergency(message = "...")
+```
+
+will send notifications every minute until you go into the app and turn recognize the notification.
+
+## Example Workflow
+
+In the folowing example, we show how `pushoverr` can be used to display errors and progress.
+
+```{r, eval=F}
+# set_pushover_user(user = "...")
+# set_pushover_app(token = "...")
+
+log_scalar_pushover <- function(x) {
+  tryCatch({
+    # Input must be scalar
+    if (length(x) != 1) {
+      stop("Input must be a single value.")
+    }
+    
+    return(log(x))
+
+  }, error = function(e) {
+    # Send error notification
+    pushover(message = paste("Caught an error:", e$message))
+    return(NA)
+  })
+}
+
+time_consuming_fxn <- function(i) {
+  Sys.sleep(1) # sleep for 1 second
+  log_scalar_pushover(i)
+}
+
+my_list <- list(
+  1,
+  2, 
+  c(3, 4)
+)
+
+total_iter <- length(my_list)
+
+for (i in 1:total_iter) {
+  out <- time_consuming_fxn(my_list[[i]])
+  
+  # Exit loop if error encountered
+  if (!is.numeric(out)) {
+    break
+  }
+  
+  # Progress notification
+  message <- paste0(i, " / ", total_iter)
+  pushover(message)
+}
+```
+
+This results in these push notifications:
+
+![](img/example.jpg){width=50% fig-align="center"}
+
+
+## Additional Notes
+
+**This is only the beginning.** This software can be used in virtually every coding language you'd need as a statistician:
+
+  * R
+  * command line
+  * python
+  * C
+  * C++ $\implies$ Rcpp
+  * Ruby
+  * Perl
+  * PHP
+  * Java
+  * Rust
+  * Swift
+  * and more ...
+  
+Also, pushover can also be integrated with other software:
+
+  * Convert emails received to your individual pushover email address into pushover notifications, so any system that sends something to an email can be turned into a pushover notification.
+  * Push notifications for GitHub commits to repositories.
+  * And many more: [https://pushover.net/apps](https://pushover.net/apps).
+  
+You can also send push notifications with images and you can customize the sound of the push notifications.
+
+**Don't want work notifications all the time?** Me neither. You can set quite hours on the pushover website or app to prevent notifications at certain times of the day. It also integrates with you decives built in notification settings, which you can set as you like.
+
+## Conclusion
+
+`pushoverr` is an R package that enables integration with the pushover software. You can get push notifications to virtually all of your devices so that you can address problems as they arise and check the progress of your script on the go. One you have an account, implementation is easy and can be used in conjuction with existing methods.
+
+## Additional Sources
+
+  * [https://briandconnelly.github.io/pushoverr/articles/getting_started.html](https://briandconnelly.github.io/pushoverr/articles/getting_started.html)
+  * [https://support.pushover.net/i44-example-code-and-pushover-libraries#r](https://support.pushover.net/i44-example-code-and-pushover-libraries)
+  * [https://cran.r-project.org/web/packages/pushoverr/index.html](https://cran.r-project.org/web/packages/pushoverr/index.html)
+  
