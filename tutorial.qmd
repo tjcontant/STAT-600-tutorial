@@ -10,20 +10,20 @@ Tristan Contant, STAT-600, 2025-09-11
 
 ## Motivation
 
-With the advent of big data and great computational power, it has become  common to have scripts that take a long time to run, notably in Bayesian computation. When running long scripts, it is helpful to periodically get updates.
+With the big data and great computational power readily available, it is common to have scripts that take a long time to run, notably in Bayesian Monte Carlo computation. When running long scripts, it is helpful to periodically get updates.
 
   * **errors**: Is my script still running? If not, why did it stop?
   * **progress**: How far along is the script? How much longer will it take?
   
-When working locally in Rstudio, these updates are easily obtained. Error detection can be addressed by printing helpful messages within functions that explain errors. For example, we may want to check the type of objects given to a function. In the following example, we only accept scalar values, not vectors.
+When working in Rstudio, these updates are easily obtained. Error detection can be addressed by include code to print error explanations within functions. For example, we may want to limit the type of objects given to a function. In the following example, we only accept a scalar input.
 
 ```{r}
 # non-vectorized log()
 log_scalar <- function(x) {
   tryCatch({
-    
+    # Input must be scalar
     if (length(x) != 1) {
-      stop("Input must be a single value.")
+      stop("Input must be a scalar.")
     }
     
     return(log(x))
@@ -35,25 +35,27 @@ log_scalar <- function(x) {
 }
 ```
 
-We compare the two functions.
+Consider the difference in `log_scalar()` and `log()`.
 
 ```{r}
 log(c(1, 2))
 log_scalar(c(1, 2))
 ```
 
-Tracking progress can be addressed using the `progress` package which will display handy metrics. For example, you can get a progress bar output to your console that looks like
+Tracking progress can be addressed using the `progress` package which will display handy metrics. For example, you can get a progress bar output to your console that looks like this:
 
 ```
   Progress [==========>----------------------]  32% ETA:  7s
 ```
 
-If working remotely, you may not have access to an integrated development environment (IDE) such as RStudio. For example, you may be running scripts on a high-performance computing system such as Alpine. In this situation, creating log files to store errors and progress can be a way to to get updates.
+If working remotely, you may not have access to an environment such as RStudio. For example, you may be running scripts on a high-performance computing system such as Alpine. In this situation, creating log files to store errors and progress can be a way to to get updates. 
 
 ```{r, eval=F}
 dir.create("logs", recursive = TRUE, showWarnings = FALSE)
 sink(paste0("logs/log_", Sys.Date(), ".txt"), split = TRUE)
 ```
+
+Apline can send you emails saying if your script has stopped because of an error (or completion) but it does not give details.
 
 All of the above is easily implemented, but it it requires that you consistently pull up Rstudio or log into servers. You have to always have access to your computer to check errors/progress, along with signing into VPNs if your server has such securities.
 
@@ -61,13 +63,13 @@ To avoid this hassle, `pushoverr` is a package that can send push notifications 
 
 ## Setup
 
-To get started, we first need to create a pushover account at [https://pushover.net/signup](https://pushover.net/signup). A free 30 day trial is available. After that, a one-time payment of $5.99 is required. You can send up to 10,000 notifications a month.
+To get started, create a pushover account at [https://pushover.net/signup](https://pushover.net/signup). A free 30 day trial is available. After that, a one-time payment of $5.99 is required. You can send up to 10,000 notifications a month.
 
 Once you have created an account, you will have a user key which will uniquely identify you in the pushover system. 
 
 ![](img/user_key.png){width=75% fig-align="center"}
 
-Before coding in R, we must add our devices (the computers or servers that will be creating push notifications) and create an API token. This is straightforward within the website.
+Before coding in R, we must add our devices to the pushover system and create an API token. This is straightforward within the website.
 
 ![](img/device_and_api.png){width=75% fig-align="center"}
 
@@ -79,7 +81,7 @@ In this tutorial, we will assume you want push notifications sent to your phone.
 Now, we are ready to begin coding. Install and load the `pushoverr` package. 
 
 ```{r, eval=F}
-instal.packages("pushoverr")
+install.packages("pushoverr")
 library(pushoverr)
 ```
 
@@ -104,7 +106,7 @@ where you can set the message to whatever string you would like.
 
 ![](img/hello_world.png){width=30% fig-align="center"}
 
-More practically, you could set your message to the current iteration:
+More practically, you could set your message to the current iteration of a loop:
 
 ```{r, eval=F}
 message <- paste0(i, " / ", total_iter)
