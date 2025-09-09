@@ -3234,7 +3234,7 @@ window.Quarto = {
 <li><strong>errors</strong>: Is my script still running? If not, why did it stop?</li>
 <li><strong>progress</strong>: How far along is the script? How much longer will it take?</li>
 </ul>
-<p>When working in Rstudio, these updates are easily obtained. Error detection can be addressed by include code to print error explanations within functions. For example, we may want to limit the type of objects given to a function. In the following example, we only accept a scalar input.</p>
+<p>When working in RStudio, these updates are easily obtained. Error detection can be addressed by include code to print error explanations within functions. For example, we may want to limit the type of objects given to a function. In the following example, we only accept a scalar input.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># non-vectorized log()</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>log_scalar <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
@@ -3270,11 +3270,17 @@ window.Quarto = {
 <pre><code>  Progress [==========&gt;----------------------]  32% ETA:  7s</code></pre>
 <p>If working remotely, you may not have access to an environment such as RStudio. For example, you may be running scripts on a high-performance computing system such as Alpine. In this situation, creating log files to store errors and progress can be a way to to get updates.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">&quot;logs&quot;</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sink</span>(<span class="fu">paste0</span>(<span class="st">&quot;logs/log_&quot;</span>, <span class="fu">Sys.Date</span>(), <span class="st">&quot;.txt&quot;</span>), <span class="at">split =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Start logging</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">&quot;logs&quot;</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sink</span>(<span class="fu">paste0</span>(<span class="st">&quot;logs/log_&quot;</span>, <span class="fu">Sys.Date</span>(), <span class="st">&quot;.txt&quot;</span>), <span class="at">split =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ... code with cat() updates ...</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop logging</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sink</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Apline can send you emails saying if your script has stopped because of an error (or completion) but it does not give details.</p>
-<p>All of the above is easily implemented, but it it requires that you consistently pull up Rstudio or log into servers. You have to always have access to your computer to check errors/progress, along with signing into VPNs if your server has such securities.</p>
+<p>Additionally, alpine can send you emails saying if your script has stopped because of an error (or completion) but it does not give details.</p>
+<p>All of the above is straightforward, but it it requires that you consistently pull up RStudio or log into servers. You have to always have access to your computer to check errors/progress, along with signing into VPNs if your server has such securities.</p>
 <p>To avoid this hassle, <code>pushoverr</code> is a package that can send push notifications to your phone, smart watch, or web browser. <strong>You can see how your R script is performing on the go.</strong> Catch errors in your script as they come up, rather than waiting all day for your script to finish only to realize that it encountered an error at the beginning. See your script’s progress in real time.</p>
 </section>
 <section id="setup" class="level2">
@@ -3340,11 +3346,11 @@ window.Quarto = {
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pushover_emergency</span>(<span class="at">message =</span> <span class="st">&quot;...&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>will send notifications every minute until you go into the app and turn recognize the notification.</p>
+<p>will send notifications every minute until you go into the app and recognize the notification.</p>
 </section>
 <section id="example-workflow" class="level2">
 <h2 class="anchored" data-anchor-id="example-workflow">Example Workflow</h2>
-<p>In the folowing example, we show how <code>pushoverr</code> can be used to display errors and progress.</p>
+<p>In the following example, we show how <code>pushoverr</code> can be used to display errors and progress.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set_pushover_user(user = &quot;...&quot;)</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># set_pushover_app(token = &quot;...&quot;)</span></span>

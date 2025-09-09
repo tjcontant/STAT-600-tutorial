@@ -138,7 +138,7 @@ will send notifications every minute until you go into the app and recognize the
 
 ## Example Workflow
 
-In the folowing example, we show how `pushoverr` can be used to display errors and progress.
+In the following example, we show how `pushoverr` can be used to display errors and progress.
 
 ```{r, eval=F}
 # set_pushover_user(user = "...")
